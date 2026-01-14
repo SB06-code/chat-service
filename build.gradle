@@ -6,7 +6,7 @@ plugins {
 
 group = 'codeit.sb06'
 version = '0.0.1-SNAPSHOT'
-description = 'websocket'
+description = 'chat-service'
 
 java {
     toolchain {
