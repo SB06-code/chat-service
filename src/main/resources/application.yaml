@@ -1,0 +1,16 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: websocket-chat
+  thymeleaf:
+    cache: false
+
+jwt:
+  secret: websocket-chat-secret-key-for-production-use-longer-and-more-complex-key
+
+logging:
+  level:
+    com.sb02.practice.ws: DEBUG
+    org.springframework.messaging: DEBUG

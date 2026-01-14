@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 채팅</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 400px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .room-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .room-button {
+            padding: 20px;
+            border: 2px solid #007bff;
+            background-color: white;
+            color: #007bff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .room-button:hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .error {
+            color: #dc3545;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>실시간 채팅</h1>
+
+    <div class="form-group">
+        <label for="username">사용자 이름</label>
+        <input type="text" id="username" placeholder="사용자 이름을 입력하세요" maxlength="20">
+    </div>
+
+    <div class="form-group">
+        <label>채팅방 선택</label>
+        <div class="room-list">
+            <div class="room-button" onclick="joinRoom('general')">
+                📝 일반 채팅
+            </div>
+            <div class="room-button" onclick="joinRoom('tech')">
+                💻 기술 토론
+            </div>
+            <div class="room-button" onclick="joinRoom('game')">
+                🎮 게임 이야기
+            </div>
+            <div class="room-button" onclick="joinRoom('free')">
+                💬 자유 주제
+            </div>
+        </div>
+    </div>
+
+    <div id="error" class="error"></div>
+</div>
+
+<script>
+    function joinRoom(roomId) {
+        const username = document.getElementById('username').value.trim();
+        const errorDiv = document.getElementById('error');
+
+        // 유효성 검사
+        if (!username) {
+            errorDiv.textContent = '사용자 이름을 입력해주세요.';
+            return;
+        }
+
+        if (username.length < 2) {
+            errorDiv.textContent = '사용자 이름은 2글자 이상이어야 합니다.';
+            return;
+        }
+
+        if (username.length > 20) {
+            errorDiv.textContent = '사용자 이름은 20글자 이하여야 합니다.';
+            return;
+        }
+
+        // 특수문자 검사
+        const validPattern = /^[가-힣a-zA-Z0-9\s]+$/;
+        if (!validPattern.test(username)) {
+            errorDiv.textContent = '사용자 이름에는 한글, 영문, 숫자만 사용할 수 있습니다.';
+            return;
+        }
+
+        errorDiv.textContent = '';
+
+        // JWT 토큰 요청
+        fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'username=' + encodeURIComponent(username)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 토큰을 URL 파라미터로 전달
+                    window.location.href = `/chat/${roomId}?username=${encodeURIComponent(data.username)}&token=${data.token}`;
+                } else {
+                    errorDiv.textContent = data.message;
+                }
+            })
+            .catch(error => {
+                errorDiv.textContent = '로그인 중 오류가 발생했습니다.';
+                console.error('Login error:', error);
+            });
+    }
+
+    // 기존 엔터키 이벤트도 수정
+    document.getElementById('username').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            joinRoom('general');
+        }
+    });
+</script>
+</body>
+</html>
